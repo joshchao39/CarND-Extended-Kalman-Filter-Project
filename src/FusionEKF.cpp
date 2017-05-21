@@ -48,68 +48,122 @@ FusionEKF::~FusionEKF() {}
 void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
 
-  /*****************************************************************************
-   *  Initialization
-   ****************************************************************************/
-  if (!is_initialized_) {
+    /*****************************************************************************
+     *  Initialization
+     ****************************************************************************/
+    if (!is_initialized_) {
+        /**
+        TODO:
+          * Initialize the state ekf_.x_ with the first measurement.
+          * Create the covariance matrix.
+        */
+        // first measurement
+        cout << "EKF: " << endl;
+        ekf_.x_ = VectorXd(4);
+        ekf_.x_ << 1, 1, 1, 1;
+
+        if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
+            /**
+            * Convert radar from polar to cartesian coordinates and initialize state.
+            * Remember: you'll need to convert radar from polar to cartesian coordinates.
+            */
+            double rho = measurement_pack.raw_measurements_[0];
+            double phi = measurement_pack.raw_measurements_[1];
+
+            double px = rho * cos(phi);
+            double py = rho * sin(phi);
+            ekf_.x_ << px, py, 0, 0;
+        } else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
+            /**
+            Initialize state.
+            */
+            double px = measurement_pack.raw_measurements_[0];
+            double py = measurement_pack.raw_measurements_[1];
+            ekf_.x_ << px, py, 0, 0;
+        }
+        previous_timestamp_ = measurement_pack.timestamp_;
+        // done initializing, no need to predict or update
+        is_initialized_ = true;
+        return;
+    }
+
+
+    double px = ekf_.x_[0];
+    double py = ekf_.x_[1];
+    double vx = ekf_.x_[2];
+    double vy = ekf_.x_[3];
+
+    double px2 = px * px;
+    double py2 = py * py;
+
+    if (fabs(px2 + py2) < 0.0001) {
+        cout << "CalculateJacobian () - Error - Division by Zero" << endl;
+        return;
+    }
+
+    ekf_.H_ = MatrixXd(3, 4);
+    ekf_.H_(0, 0) = px / sqrt(px2 + py2);
+    ekf_.H_(0, 1) = py / sqrt(px2 + py2);
+    ekf_.H_(0, 2) = 0;
+    ekf_.H_(0, 3) = 0;
+    ekf_.H_(1, 0) = -py / (px2 + py2);
+    ekf_.H_(1, 1) = px / (px2 + py2);
+    ekf_.H_(1, 2) = 0;
+    ekf_.H_(1, 3) = 0;
+    ekf_.H_(2, 0) = py * (vx * py - vy * px) / sqrt((px2 + py2) * (px2 + py2) * (px2 + py2));
+    ekf_.H_(2, 1) = px * (vy * px - vx * py) / sqrt((px2 + py2) * (px2 + py2) * (px2 + py2));
+    ekf_.H_(2, 2) = px / sqrt(px2 + py2);
+    ekf_.H_(2, 3) = py / sqrt(px2 + py2);
+
+    /*****************************************************************************
+     *  Prediction
+     ****************************************************************************/
+
     /**
-    TODO:
-      * Initialize the state ekf_.x_ with the first measurement.
-      * Create the covariance matrix.
-      * Remember: you'll need to convert radar from polar to cartesian coordinates.
-    */
-    // first measurement
-    cout << "EKF: " << endl;
-    ekf_.x_ = VectorXd(4);
-    ekf_.x_ << 1, 1, 1, 1;
+     TODO (Done):
+       * Update the state transition matrix F according to the new elapsed time.
+        - Time is measured in seconds.
+       * Update the process noise covariance matrix.
+       * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
+     */
+    double dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;    //dt - expressed in seconds
+    double dt2 = dt * dt;
+    double dt3 = dt2 * dt;
+    double dt4 = dt3 * dt;
+
+    ekf_.F_ = MatrixXd(4, 4);
+    ekf_.F_ << 1, 0, dt, 0,
+            0, 1, 0, dt,
+            0, 0, 1, 0,
+            0, 0, 0, 1;
+
+    double noise_ax = 9;
+    double noise_ay = 9;
+    ekf_.Q_ = MatrixXd(4, 4);
+    ekf_.Q_ << dt4 / 4 * noise_ax, 0, dt3 / 2 * noise_ax, 0,
+            0, dt4 / 4 * noise_ay, 0, dt3 / 2 * noise_ay,
+            dt3 / 2 * noise_ax, 0, dt2 * noise_ax, 0,
+            0, dt3 / 2 * noise_ay, 0, dt2 * noise_ay;
+
+    ekf_.Predict();
+
+    /*****************************************************************************
+     *  Update
+     ****************************************************************************/
+
+    /**
+     TODO:
+       * Use the sensor type to perform the update step.
+       * Update the state and covariance matrices.
+     */
 
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
-      /**
-      Convert radar from polar to cartesian coordinates and initialize state.
-      */
-    }
-    else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
-      /**
-      Initialize state.
-      */
+        // Radar updates
+    } else {
+        // Laser updates
     }
 
-    // done initializing, no need to predict or update
-    is_initialized_ = true;
-    return;
-  }
-
-  /*****************************************************************************
-   *  Prediction
-   ****************************************************************************/
-
-  /**
-   TODO:
-     * Update the state transition matrix F according to the new elapsed time.
-      - Time is measured in seconds.
-     * Update the process noise covariance matrix.
-     * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
-   */
-
-  ekf_.Predict();
-
-  /*****************************************************************************
-   *  Update
-   ****************************************************************************/
-
-  /**
-   TODO:
-     * Use the sensor type to perform the update step.
-     * Update the state and covariance matrices.
-   */
-
-  if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
-    // Radar updates
-  } else {
-    // Laser updates
-  }
-
-  // print the output
-  cout << "x_ = " << ekf_.x_ << endl;
-  cout << "P_ = " << ekf_.P_ << endl;
+    // print the output
+    cout << "x_ = " << ekf_.x_ << endl;
+    cout << "P_ = " << ekf_.P_ << endl;
 }
