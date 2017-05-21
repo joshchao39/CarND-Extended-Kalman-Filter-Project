@@ -33,7 +33,7 @@ void KalmanFilter::Update(const VectorXd &z) {
     TODO (Done):
       * update the state by using Kalman Filter equations
     */
-    MatrixXd I = MatrixXd::Identity(2, 2);
+    MatrixXd I = MatrixXd::Identity(4, 4);
 
     VectorXd y = z - H_ * x_;
     MatrixXd S = H_ * P_ * H_.transpose() + R_;
@@ -48,7 +48,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
     TODO:
       * update the state by using Extended Kalman Filter equations
     */
-    MatrixXd I = MatrixXd::Identity(2, 2);
+    MatrixXd I = MatrixXd::Identity(4, 4);
 
     VectorXd y = z - H_ * x_;
     MatrixXd S = H_ * P_ * H_.transpose() + R_;
