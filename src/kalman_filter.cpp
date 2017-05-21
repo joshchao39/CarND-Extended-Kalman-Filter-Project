@@ -43,14 +43,34 @@ void KalmanFilter::Update(const VectorXd &z) {
     P_ = (I - K * H_) * P_;
 }
 
+double fit_radian(double rad) {
+    while (rad < -M_PI) {
+        rad += 2 * M_PI;
+    }
+    while (rad > M_PI) {
+        rad -= 2 * M_PI;
+    }
+    return rad;
+}
+
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
     /**
     TODO:
       * update the state by using Extended Kalman Filter equations
     */
     MatrixXd I = MatrixXd::Identity(4, 4);
+    double px = x_[0];
+    double py = x_[1];
+    double vx = x_[2];
+    double vy = x_[3];
 
-    VectorXd y = z - H_ * x_;
+    MatrixXd H_x = VectorXd(3);
+    H_x << sqrt(px * px + py * py),
+            atan2(py, px), // TODO: Check atan2 does what it should do
+            (px * vx + py * vy) / sqrt(px * px + py * py);
+
+    VectorXd y = z - H_x;
+    y[1] = fit_radian(y[1]);
     MatrixXd S = H_ * P_ * H_.transpose() + R_;
     MatrixXd K = P_ * H_.transpose() * S.inverse();
 
