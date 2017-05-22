@@ -8,6 +8,8 @@
 
 using namespace std;
 
+bool RUN_FROM_FILE = true;
+
 // for convenience
 using json = nlohmann::json;
 
@@ -27,7 +29,7 @@ std::string hasData(std::string s) {
 }
 
 
-int main() {
+int run_from_file() {
     string in_file_name_ = "../data/obj_pose-laser-radar-synthetic-input.txt";
     ifstream in_file_(in_file_name_.c_str(), ifstream::in);
 
@@ -96,64 +98,73 @@ int main() {
         ground_truth.push_back(gt_values);
     }
 
-    double max_rho = -DBL_MAX;
-    double max_theta = -DBL_MAX;
-    double min_rho = DBL_MAX;
-    double min_theta = DBL_MAX;
+//    double max_rho = -DBL_MAX;
+//    double max_theta = -DBL_MAX;
+//    double min_rho = DBL_MAX;
+//    double min_theta = DBL_MAX;
+//
+//    for (int i = 0; i < measurement_pack_list.size(); i++) {
+//        MeasurementPackage meas_package = measurement_pack_list[i];
+//        if (meas_package.sensor_type_ == MeasurementPackage::SensorType::RADAR) {
+//            if (meas_package.raw_measurements_[0] > max_rho) {
+//                max_rho = meas_package.raw_measurements_[0];
+//            }
+//            if (meas_package.raw_measurements_[1] > max_theta) {
+//                max_theta = meas_package.raw_measurements_[1];
+//            }
+//            if (meas_package.raw_measurements_[0] < min_rho) {
+//                min_rho = meas_package.raw_measurements_[0];
+//            }
+//            if (meas_package.raw_measurements_[1] < min_theta) {
+//                min_theta = meas_package.raw_measurements_[1];
+//            }
+//            double ro = meas_package.raw_measurements_[0];
+//            double phi = meas_package.raw_measurements_[1];
+//            double px = ro * cos(phi);
+//            double py = ro * sin(phi);
+//            cout << "calculated px:" << px << endl;
+//            cout << "calculated py:" << py << endl;
+//            cout << "measured phi:" << phi << endl;
+//            cout << "measured ro:" << ro << endl;
+//        } else if (meas_package.sensor_type_ == MeasurementPackage::SensorType::LASER) {
+//            double px = meas_package.raw_measurements_[0];
+//            double py = meas_package.raw_measurements_[1];
+//            cout << "measured px:" << meas_package.raw_measurements_[0] << endl;
+//            cout << "measured py:" << meas_package.raw_measurements_[1] << endl;
+//            cout << "calculated phi:" << atan2(py, px) << endl;
+//            cout << "calculated ro:" << sqrt(px * px + py * py) << endl;
+//        }
+//    }
+//    cout << "max_rho:" << max_rho << endl;
+//    cout << "max_theta:" << max_theta << endl;
+//    cout << "min_rho:" << min_rho << endl;
+//    cout << "min_theta:" << min_theta << endl;
 
-    for (int i = 0; i < measurement_pack_list.size(); i++) {
-        MeasurementPackage meas_package = measurement_pack_list[i];
-        if (meas_package.sensor_type_ == MeasurementPackage::SensorType::RADAR) {
-            if (meas_package.raw_measurements_[0] > max_rho) {
-                max_rho = meas_package.raw_measurements_[0];
-            }
-            if (meas_package.raw_measurements_[1] > max_theta) {
-                max_theta = meas_package.raw_measurements_[1];
-            }
-            if (meas_package.raw_measurements_[0] < min_rho) {
-                min_rho = meas_package.raw_measurements_[0];
-            }
-            if (meas_package.raw_measurements_[1] < min_theta) {
-                min_theta = meas_package.raw_measurements_[1];
-            }
-//            cout << "measured rho:" << meas_package.raw_measurements_[0] << endl;
-//            cout << "measured theta:" << meas_package.raw_measurements_[1] << endl;
-            double ro = meas_package.raw_measurements_[0];
-            double phi = meas_package.raw_measurements_[1];
-            double px = ro * cos(phi);
-            double py = ro * sin(phi);
-            cout << "calculated px:" << px << endl;
-            cout << "calculated py:" << py << endl;
-        } else if (meas_package.sensor_type_ == MeasurementPackage::SensorType::LASER) {
-            cout << "measured px:" << meas_package.raw_measurements_[0] << endl;
-            cout << "measured py:" << meas_package.raw_measurements_[1] << endl;
-        }
+    // Create a Fusion EKF instance
+    FusionEKF fusionEKF;
+
+    //Call the EKF-based fusion
+    size_t N = measurement_pack_list.size();
+    for (size_t k = 0; k < N; ++k) {
+        cout << "Frame " << k << endl;
+        cout << "ground_truth = " << ground_truth[k] << endl;
+        // start filtering from the second frame (the speed is unknown in the first frame)
+        fusionEKF.ProcessMeasurement(measurement_pack_list[k]);
+
+        // output the estimation
+        VectorXd estimate(4);
+        estimate << fusionEKF.ekf_.x_(0), fusionEKF.ekf_.x_(1), fusionEKF.ekf_.x_(2), fusionEKF.ekf_.x_(3);
+
+        estimations.push_back(fusionEKF.ekf_.x_);
+
+//        double gt = ground_truth[k][0];
+//        double est = fusionEKF.ekf_.x_(0);
+//        cout << sqrt((gt - est) * (gt - est)) << endl;
     }
 
-    cout << "max_rho:" << max_rho << endl;
-    cout << "max_theta:" << max_theta << endl;
-    cout << "min_rho:" << min_rho << endl;
-    cout << "min_theta:" << min_theta << endl;
-
-//    // Create a Fusion EKF instance
-//    FusionEKF fusionEKF;
-//
-//    //Call the EKF-based fusion
-//    size_t N = measurement_pack_list.size();
-//    for (size_t k = 0; k < N; ++k) {
-//        // start filtering from the second frame (the speed is unknown in the first frame)
-//        fusionEKF.ProcessMeasurement(measurement_pack_list[k]);
-//
-//        // output the estimation
-//        VectorXd estimate(4);
-//        estimate << fusionEKF.ekf_.x_(0), fusionEKF.ekf_.x_(1), fusionEKF.ekf_.x_(2),fusionEKF.ekf_.x_(3);
-//
-//        estimations.push_back(fusionEKF.ekf_.x_);
-//    }
-//
-//    // compute the accuracy (RMSE)
-//    Tools tools;
-//    cout << "Accuracy - RMSE:" << endl << tools.CalculateRMSE(estimations, ground_truth) << endl;
+    // compute the accuracy (RMSE)
+    Tools tools;
+    cout << "Accuracy - RMSE:" << endl << tools.CalculateRMSE(estimations, ground_truth) << endl;
 
     // close input file
     if (in_file_.is_open()) {
@@ -164,7 +175,11 @@ int main() {
 }
 
 
-int main2() {
+int main() {
+    if (RUN_FROM_FILE) {
+        return run_from_file();
+    }
+
     uWS::Hub h;
 
     // Create a Kalman Filter instance
@@ -185,6 +200,7 @@ int main2() {
                 if (length && length > 2 && data[0] == '4' && data[1] == '2') {
 
                     auto s = hasData(std::string(data));
+                    cout << s << endl;
                     if (s != "") {
 
                         auto j = json::parse(s);

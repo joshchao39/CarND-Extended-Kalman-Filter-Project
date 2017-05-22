@@ -55,7 +55,7 @@ double fit_radian(double rad) {
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
     /**
-    TODO:
+    TODO (Done):
       * update the state by using Extended Kalman Filter equations
     */
     MatrixXd I = MatrixXd::Identity(4, 4);
@@ -65,9 +65,11 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
     double vy = x_[3];
 
     MatrixXd H_x = VectorXd(3);
-    H_x << sqrt(px * px + py * py),
-            atan2(py, px), // TODO: Check atan2 does what it should do
-            (px * vx + py * vy) / sqrt(px * px + py * py);
+    double px2 = px * px;
+    double py2 = py * py;
+    H_x << sqrt(px2 + py2),
+            atan2(py, px),
+            (px * vx + py * vy) / sqrt(px2 + py2);
 
     VectorXd y = z - H_x;
     y[1] = fit_radian(y[1]);
