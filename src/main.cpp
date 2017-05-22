@@ -8,7 +8,7 @@
 
 using namespace std;
 
-bool RUN_FROM_FILE = false;
+const bool RUN_FROM_FILE = false;
 
 // for convenience
 using json = nlohmann::json;
