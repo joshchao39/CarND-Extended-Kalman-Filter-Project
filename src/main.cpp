@@ -8,7 +8,7 @@
 
 using namespace std;
 
-bool RUN_FROM_FILE = true;
+bool RUN_FROM_FILE = false;
 
 // for convenience
 using json = nlohmann::json;
@@ -200,7 +200,6 @@ int main() {
                 if (length && length > 2 && data[0] == '4' && data[1] == '2') {
 
                     auto s = hasData(std::string(data));
-                    cout << s << endl;
                     if (s != "") {
 
                         auto j = json::parse(s);
