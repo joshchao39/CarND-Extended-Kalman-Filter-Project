@@ -6,9 +6,9 @@
 #include "tools.h"
 #include <float.h>
 
-using namespace std;
+#define RUN_FROM_FILE false
 
-const bool RUN_FROM_FILE = false;
+using namespace std;
 
 // for convenience
 using json = nlohmann::json;
