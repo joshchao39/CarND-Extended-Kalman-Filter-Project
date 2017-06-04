@@ -32,9 +32,8 @@ FusionEKF::FusionEKF() {
             0, 0, 0.09;
 
     /**
-    TODO (Done):
-      * Finish initializing the FusionEKF.
-      * Set the process and measurement noises
+    * Finish initializing the FusionEKF.
+    * Set the process and measurement noises
     */
     H_laser_ << 1, 0, 0, 0,
             0, 1, 0, 0;
@@ -59,9 +58,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
      ****************************************************************************/
     if (!is_initialized_) {
         /**
-        TODO (Done):
-          * Initialize the state ekf_.x_ with the first measurement.
-          * Create the covariance matrix.
+        * Initialize the state ekf_.x_ with the first measurement.
+        * Create the covariance matrix.
         */
         // first measurement
         cout << "EKF: " << endl;
@@ -99,11 +97,10 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
      ****************************************************************************/
 
     /**
-     TODO (Done):
-       * Update the state transition matrix F according to the new elapsed time.
-        - Time is measured in seconds.
-       * Update the process noise covariance matrix.
-       * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
+     * Update the state transition matrix F according to the new elapsed time.
+      - Time is measured in seconds.
+     * Update the process noise covariance matrix.
+     * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
      */
     double dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;    //dt - expressed in seconds
     double dt2 = dt * dt;
@@ -131,9 +128,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
      ****************************************************************************/
 
     /**
-     TODO (Done):
-       * Use the sensor type to perform the update step.
-       * Update the state and covariance matrices.
+     * Use the sensor type to perform the update step.
+     * Update the state and covariance matrices.
      */
 
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
